@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Numerics;
 using System.Reflection.Metadata;
 using System.Runtime.Intrinsics.X86;
@@ -64,5 +65,64 @@ namespace AsyncProgrammingCodingTasks
                 Console.WriteLine(e.Message);
             }
         }
+
+        // Task: Handling Exceptions in Asynchronous Methods
+        //Objective: Implement error handling in asynchronous methods.
+
+        //Instructions:
+
+        //Modify the DownloadDataAsync method to handle exceptions such as network errors.
+        //If an exception occurs, catch it and return a default message indicating the error.
+        //In the FetchMultipleUrlsAsync method, ensure that all tasks complete even if some of them fail.
+        //Print a message for each URL indicating whether the download was successful or failed.
+
+        public static async Task<string> DownloadDataWithExceptionHandlingAsync(string url)
+        {
+            using HttpClient client = new HttpClient();
+            Task<string> strFromUrl = client.GetStringAsync(url);
+            try
+            {
+
+                return await strFromUrl;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return "Error occurred";
+            }
+
+        }
+
+        public static async Task FetchMultipleUrlsWithExcepionHandlingAsync(List<string> urls)
+        {
+
+            // create a list of tasks
+            List<Task<string>> listOfTasks = urls.Select(url => Task.Run(()=> DownloadDataWithExceptionHandlingAsync(url))).ToList();
+            
+            int successfulTasksCounter = 0;
+            int listOfTasksCounter = listOfTasks.Count;
+
+            while (listOfTasks.Any())
+            {  
+                // await any of tasks to complete
+                Task<string> finishedTask = await Task.WhenAny(listOfTasks); 
+                    listOfTasks.Remove(finishedTask);
+                try
+                {
+                    string result = await finishedTask;
+                    Console.WriteLine($"The task {finishedTask.Id} has finished successfully.");
+                    successfulTasksCounter++;
+                } catch (Exception ex)
+                {
+                    Console.WriteLine($"The task {finishedTask.Id} has failed.");
+                }
+            }
+
+            Console.WriteLine($"{successfulTasksCounter} out of {listOfTasksCounter} have finished successfully.");
+
+        }
+
+
     }
 }
